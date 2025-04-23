@@ -1,0 +1,6 @@
+node_modules
+dist
+logs
+docker
+eslint.config.mjs
+.gitignore

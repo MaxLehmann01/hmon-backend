@@ -20,6 +20,7 @@ services:
         ports:
             - "8000:80"
         environment:
+            NODE_ENV: development
             DB_HOST: db
             DB_PORT: 5432
             DB_NAME: hmon
@@ -28,6 +29,8 @@ services:
         volumes:
             - ../src:/app/src
             - ../logs:/app/logs
+        depends_on:
+            - db
 
 volumes:
     hmon-backend-db:

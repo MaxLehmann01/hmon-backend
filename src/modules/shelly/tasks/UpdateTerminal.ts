@@ -1,27 +1,31 @@
 import axios, { AxiosRequestConfig } from "axios";
-import { ShellyPlug } from "./Types";
+import PlugService from "../PlugService";
 import Config from "src/components/Config";
 
 const TERMINAL_URL = Config.getEnvVarAsString("TERMINAL_URL", false);
 
-export default class TerminalService {
-    public static async sendPlugsToTerminal(shellyPlugs: ShellyPlug[]) {
+export default class UpdateTerminalTask {
+    public static async run(): Promise<void> {
+        const plugs = await PlugService.getPlugsWithLatestMeasurement();
+
         const requestConfig: AxiosRequestConfig = {
             method: "POST",
             url: `${TERMINAL_URL}/plugs`,
-            data: shellyPlugs.map((plug) => ({
+            headers: {
+                "Content-Type": "application/json",
+            },
+            data: plugs.map((plug) => ({
                 id: plug.id,
                 name: plug.name,
+                power_usage: Number(plug.power),
                 is_on: plug.is_on,
-                power_usage: 1.05,
             })),
-            timeout: 3000,
         };
 
         try {
             await axios(requestConfig);
         } catch (error) {
-            console.error("Error sending plugs to terminal:", error);
+            console.error("Error updating terminal:", error);
         }
     }
 }

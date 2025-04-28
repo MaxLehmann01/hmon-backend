@@ -2,7 +2,10 @@ import Config from "./components/Config";
 import Logger from "./components/Logger";
 import Postgres from "./core/Postgres/Postgres";
 import Scheduler from "./core/Scheduler/Scheduler";
-import FetchTask from "./modules/shelly/tasks/Fetch";
+import CreateReportTask from "./modules/shelly/tasks/CreateReport";
+import CreateSummaryTask from "./modules/shelly/tasks/CreateSummary";
+import FetchMeasurementTask from "./modules/shelly/tasks/FetchMeasurement";
+import UpdateTerminalTask from "./modules/shelly/tasks/UpdateTerminal";
 
 const LOG_DIR = "/app/logs";
 const DB_HOST = Config.getEnvVarAsString("DB_HOST", false);
@@ -19,4 +22,11 @@ pg.init(DB_HOST, DB_PORT, DB_NAME, "public", DB_USER, DB_PASSWORD, false);
 const scheduler = Scheduler.getInstance();
 scheduler.init();
 
-scheduler.addJob("fetch-shelly-plugs", "* * * * * *", FetchTask.run);
+scheduler.addJob("fetch-shelly-plugs", "* * * * * *", FetchMeasurementTask.run);
+scheduler.addJob("create-shelly-summary", "*/5 * * * *", CreateSummaryTask.run);
+scheduler.addJob("create-shelly-report", "0 0 * * *", CreateReportTask.run);
+scheduler.addJob(
+    "update-shelly-terminal",
+    "* * * * * *",
+    UpdateTerminalTask.run
+);

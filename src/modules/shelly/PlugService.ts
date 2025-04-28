@@ -17,6 +17,43 @@ export default class PlugService {
         return plugs;
     }
 
+    public static async getPlugsWithLatestMeasurement(): Promise<any[]> {
+        const db = Postgres.getInstance();
+
+        const plugs = await db.query(`
+            SELECT
+                p.*,
+                m.id AS measurement_id,
+                m.created_at AS measurement_created_at,
+                m.power,
+                m.current,
+                m.voltage,
+                m.temp_c,
+                m.temp_f
+            FROM
+                shelly_plugs p
+            LEFT JOIN LATERAL (
+                SELECT
+                    m.*
+                FROM
+                    shelly_measurements m
+                WHERE
+                    m.plug_id = p.id
+                ORDER BY
+                    m.created_at DESC
+                LIMIT 1
+            ) m ON true;
+        `);
+
+        return plugs.rows.map((plug) => ({
+            id: plug.id,
+            name: plug.name,
+            protected: plug.protected,
+            is_on: plug.is_on,
+            power: plug.power,
+        }));
+    }
+
     public static async updatePlug(
         plugId: ShellyPlug["id"],
         plug: Partial<Omit<ShellyPlug, "id" | "created_at">>

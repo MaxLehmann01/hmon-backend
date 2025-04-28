@@ -28,3 +28,18 @@ export type ShellyMeasurementNormalized = {
     temp_c: number;
     temp_f: number;
 };
+
+export type ShellySummary = {
+    id: number;
+    plug_id: ShellyPlug["id"];
+    created_at: Date;
+    start_at: Date;
+    end_at: Date;
+    power_sum: number;
+    power_avg: number;
+    current_avg: number;
+    voltage_avg: number;
+    temp_c_avg: number;
+    temp_f_avg: number;
+    count_measurements: number;
+};

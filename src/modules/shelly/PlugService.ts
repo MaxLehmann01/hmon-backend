@@ -1,20 +1,23 @@
 import Postgres from "src/core/Postgres/Postgres";
 import { ShellyPlug } from "./Types";
+import axios, { AxiosRequestConfig } from "axios";
 
 export default class PlugService {
     public static async getPlugs(): Promise<ShellyPlug[]> {
         const db = Postgres.getInstance();
 
-        const plugs = await db.select<ShellyPlug>("shelly_plugs", [
-            "id",
-            "created_at",
-            "name",
-            "url",
-            "protected",
-            "is_on",
-        ]);
+        // const plugs = await db.select<ShellyPlug>(
+        //     "shelly_plugs",
+        //     ["id", "created_at", "name", "url", "protected", "is_on"],
+        //     "1=1",
+        //     []
+        // );
 
-        return plugs;
+        const rows = await db.query<ShellyPlug>(
+            `SELECT id, created_at, name, url, protected, is_on FROM shelly_plugs ORDER BY id ASC`
+        );
+
+        return rows.rows;
     }
 
     public static async getPlugsWithLatestMeasurement(): Promise<any[]> {
@@ -42,7 +45,8 @@ export default class PlugService {
                 ORDER BY
                     m.created_at DESC
                 LIMIT 1
-            ) m ON true;
+            ) m ON true
+            ORDER BY p.id ASC;
         `);
 
         return plugs.rows.map((plug) => ({
@@ -65,5 +69,38 @@ export default class PlugService {
         ]);
 
         return affectedRows > 0;
+    }
+
+    public static async togglePlug(
+        plugId: ShellyPlug["id"]
+    ): Promise<-1 | 0 | 1> {
+        try {
+            const db = Postgres.getInstance();
+
+            const plug = await db.selectOne<ShellyPlug>(
+                "shelly_plugs",
+                ["url", "protected"],
+                "id = $1",
+                [plugId]
+            );
+
+            if (!plug) {
+                return 0;
+            }
+
+            if (plug.protected) {
+                return -1;
+            }
+
+            const requestConfig: AxiosRequestConfig = {
+                method: "GET",
+                url: `${plug.url}/rpc/Switch.Toggle?id=0`,
+            };
+
+            await axios(requestConfig);
+            return 1;
+        } catch (_) {
+            return 0;
+        }
     }
 }

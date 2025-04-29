@@ -11,6 +11,11 @@ services:
         volumes:
             - hmon-backend-db:/var/lib/postgresql/data
             - ../db/init.sql:/docker-entrypoint-initdb.d/init.sql
+        healthcheck:
+            test: ["CMD", "pg_isready", "-U", "postgres"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
 
     app:
         build:
@@ -26,12 +31,15 @@ services:
             DB_NAME: hmon
             DB_USER: postgres
             DB_PASSWORD: postgres
-            TERMINAL_URL: http://172.23.23.111:8080
+            # TERMINAL_URL: http://172.23.23.111:8080
+            TERMINAL_URL: http://192.168.178.33:8080
+            CORS_WHITELIST: "*"
         volumes:
             - ../src:/app/src
             - ../logs:/app/logs
         depends_on:
-            - db
+            db:
+                condition: service_healthy
 
 volumes:
     hmon-backend-db:

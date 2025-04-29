@@ -19,6 +19,7 @@ export default class UpdateTerminalTask {
                 name: plug.name,
                 power_usage: Number(plug.power),
                 is_on: plug.is_on,
+                is_protected: plug.protected,
             })),
         };
 

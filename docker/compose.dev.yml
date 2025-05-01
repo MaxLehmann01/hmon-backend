@@ -20,7 +20,7 @@ services:
     app:
         build:
             context: ..
-            dockerfile: docker/Dockerfile
+            dockerfile: docker/Dockerfile.dev
         container_name: hmon-backend-app
         ports:
             - "3000:80"

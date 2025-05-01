@@ -1,0 +1,44 @@
+name: build-and-deploy
+
+on:
+    workflow_dispatch:
+    push:
+        branches:
+            - main
+
+jobs:
+    build:
+        runs-on: self-hosted
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
+
+            - name: Log in to private registry
+              uses: docker/login-action@v2
+              with:
+                  registry: ${{ secrets.DOCKER_REGISTRY_URI }}
+                  username: ${{ secrets.DOCKER_REGISTRY_USER }}
+                  password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v2
+              with:
+                  context: .
+                  file: docker/Dockerfile.prod
+                  push: true
+                  tags: ${{ secrets.DOCKER_REGISTRY_URI }}/hmon-backend:latest
+
+    deploy:
+        runs-on: self-hosted
+        needs: build
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v2
+
+            - name: Run compose.yml
+              run: |
+                  ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_IP }} << 'EOF'
+                     cd ~/hmon-backend
+                     docker-compose pull
+                     docker-compose up -d
+                  EOF
